@@ -6,7 +6,6 @@ MAIN:
         MOV P1, #07H            ; 7-segment common port
         MOV R0, #00H		; Default queue number
         MOV R1, #00H		; Default service number
-        MOV R6, #00H
         MOV R2, #1		; Queue button debouncing flag
         MOV R3, #1		; Service increment button debouncing flag
         MOV R4, #1		; Service decrement button debouncing flag
@@ -23,106 +22,114 @@ BUT1:	; Queue button debouncing check
 
 BUT2:	; Service button (increment) debouncing check
         JB P1.1, BUT3
-        CJNE R3, #1, BUT3		; If the button has already been pressed (FLAG - 1), jump to the next button subroutine
+        CJNE R3, #1, BUT3
 
-        MOV A, R0				; Move the queue number register to the accumulator
-        XRL A, R1				; Perform a bitwise XOR operation between the value stored in the accumulator with the service value register
-        JZ BUT3					; If the value in the accumulator is 0 (queue number = service number), jump directly to the next button subroutine
+        ; if(service_no == queue_no){ jump_to_next_branch; } else { proceed; }
+        MOV A, R0
+        XRL A, R1
+        JZ BUT3	
 
-        MOV R5, #15				; If not, set the timer duration for the buzzer to be activated
-        SETB P1.3				; Activate the buzzer
+        ; Activate the buzzer for a short time
+        MOV R5, #15
+        SETB P1.3
 
-        MOV R3, #0				; Set FLAG - 0 to indicate that the button is being pressed
-        MOV A, R1				; Move the service number register to the accumulator
-        ADD A, #01H				; Add the value in the accumulator with #01H
-        DA A					; Adjust the value to the next closest Binary Encoded Decimal (BCD) and store it in the accumulator
-        MOV R1, A				; Move the value stored in the accumulator back to the queue number register
+        ; Make sure hex increment goes from 9 to 10, not 9 to A (and so on)
+        MOV R3, #0
+        MOV A, R1
+        ADD A, #01H
+        DA A                    ; This is a shit way of hex->BCD conversion, use manual ADD instruction instead
+        MOV R1, A
 
-BUT3:	JB P1.2, MULTPLX		; Check if the button has been presseds
-        CJNE R4, #1, MULTPLX	; If the button has already been pressed (FLAG - 1), jump to the next button subroutine
+BUT3:	; Service button (decrement) debouncing check
+        JB P1.2, MULTPLX
+        CJNE R4, #1, MULTPLX
+        
+        ; if(service_no != 0) { decrement; } else { do_nothing; }
+        MOV R4, #0
+        MOV A, R1
+        MOV B, A
+        ADD A, #99H             ; If the carry bit is set, then the value stored in the accumulator before this instruction is 0. There
+                                ; is probably a better way of doing this, feel free to amuse me (and yourself)
+        DA A                    ; This is a shit way of hex->BCD conversion, useex manual ADD instruction instead
+        MOV R1, A
+        
+        ; Activate the buzzer for a short time
+        MOV R5, #15				
+        SETB P1.3				
 
-        MOV R4, #0				; Set FLAG - 0 to indicate that the button is being pressed
-        MOV A, R1				; Move the service number register to the accumulator
-        MOV B, A				; Move the value stored in the accumulator in the B register
-        ADD A, #99H				; "Subtract" the value stored in the accumulator by #01H
-        DA A					; Adjust the value to the next closest Binary Encoded Decimal (BCD) and store it in the accumulator
-        MOV R1, A				; Move the value stored in the accumulator back to the queue number register
+        ; if(service_no < 0) { set_previous_value; } (service_no < 0 is the same as saying the carry bit was set to 1 from the above ADD instruction)
+        JC BUT3_FIN
+        MOV A, B
+        MOV R1, A
 
-        MOV R5, #15				; Set the timer duration for the buzzer to be activatetd
-        SETB P1.3				; Activate the buzzer
+MULTPLX:
+        ; First segment
+        MOV P2, #00H
+        SETB P2.0
+        MOV A, R0
+        MOV B, A
+        CALL LOWERNIB
+        ACALL UPDATE			; Display queue number lower nibble to 7-segment
 
-        JC BUT3_FIN				; Jump if the new value of R1 is lesser than 0
-        MOV A, B				; Move the value stored in the B register back to the accumulator
-        MOV R1, A				; Restore the value of the accumulator back to its previous value
+        ; Second segment
+        MOV P2, #00H        
+        SETB P2.1
+        MOV A, B
+        CALL UPPERNIB
+        ACALL UPDATE			; Display queue number upper nibble to 7-segment
 
-BUT3_FIN:
-        CALL UART				; Send the values to Ubidots regardless of the carry bit sett
+        ; Third segment
+        MOV  P2, #00H 
+        SETB P2.3
+        MOV A, R1
+        MOV B, A
+        CALL LOWERNIB
+        ACALL UPDATE			; Display service number lower nibble to 7-segment
 
-MULTPLX:	
-        MOV P2, #00H			; Turn off all the 7-segment displays
-        SETB P2.0				; Turn on the first 7-segment (queue number - units)
-        MOV A, R0				; Move the queue number register value into the accumulator
-        MOV B, A				; Move the value stored in the accumulator into the B register
-        CALL LOWERNIB			; Fetch the lower nibble of the value stored in the accumulator
-        ACALL UPDATE			; Send the lower nibble data to the 7-segment to be displayed
+        ; Fourth segment
+        MOV P2, #00H             
+        SETB P2.4
+        MOV A, B
+        CALL UPPERNIB
+        ACALL UPDATE                    ; Display service number upper nibble to 7-segment
 
-        MOV P2, #00H			; Turn off all the 7-segment displays             
-        SETB P2.1				; Turn on the second 7-segment (queue number - tens)
-        MOV A, B				; Restore the original value stored in the accumulator
-        CALL UPPERNIB			; Fetch the upper nibble of the value stored in the accumulator
-        ACALL UPDATE			; Send the upper nibble data to the 7-segment to be displayed
+        ; The part where the buzzer gets disabled
+        DJNZ R5, BUT1FLAG
+        CLR P1.3
 
-        MOV P2, #00H			; Turn off all the 7-segment displays            
-        SETB P2.2				; Turn on the third 7-segment (counter number)
-        MOV A, R6				; Move the counter number value into the accumulator
-        ACALL UPDATE			; Send the value to the 7-segment to be displayed
-
-        MOV  P2, #00H			; Turn off all the 7-segment displays         
-        SETB P2.3				; Turn on the fourth 7-segment (service number - units)
-        MOV A, R1				; Move the service number register value into the accumulator
-        MOV B, A				; Move the value stored in the accumulator into the B register
-        CALL LOWERNIB			; Fetch the lower nibble of the value stored in the accumulator
-        ACALL UPDATE			; Send the lower nibble data to the 7-segment to be displayed
-
-        MOV P2, #00H			; Turn off all the 7-segment displays               
-        SETB P2.4				; Turn on the fifth 7-segment (service number - tens)
-        MOV A, B				; Restore the original value stored in the accumulator
-        CALL UPPERNIB			; Fetch the upper nibble of the value stored in the accumulator
-        ACALL UPDATE			; Send the upper nibble data to the 7-segment to be displayed
-
-        DJNZ R5, BUT1FLAG		; Additive timer for the buzzer, will loop for around 0.5s-1s
-        CLR P1.3				; Disable the buzzer once the time is over
-
+        ; BUTTON FLAG CHECKS
 BUT1FLAG:
-        JNB P1.0, BUT2FLAG		; Check if the button has been depressed
-        MOV R2, #1				; If yes, then set FLAG - 0
+        JNB P1.0, BUT2FLAG
+        MOV R2, #1
 
 BUT2FLAG:
-        JNB P1.1, BUT3FLAG		; Check if the button has been depressed
-        MOV R3, #1				; If yes, then set FLAG - 0
+        JNB P1.1, BUT3FLAG
+        MOV R3, #1
 
 BUT3FLAG:
-        JNB P1.2, ADDRESS_LIMIT_BYPASS	; Check if the button has been depressed
-        MOV R4, #1				; If yes, then set FLAG - 0
-        LJMP BUT1				; Jump to the top of the code unconditionally
+        JNB P1.2, ADDRESS_LIMIT_BYPASS
+        MOV R4, #1
+        LJMP BUT1
 
 ADDRESS_LIMIT_BYPASS:
-        LJMP BUT1				; Jump to the top of the code unconditionally
+        LJMP BUT1
 
-UPDATE: 
-        MOV DPTR, #SEGLT		; Load the 7-segment encoded hex lookup table to the data pointer
-        MOVC A, @A+DPTR			; Find the appropriate encoded hex to be sent to the 7-segment     
-        MOV P0, A				; The encoded hex is pushed to be shown on the 7-segment
-        MOV TH0, #0EFH			; Store Timer 0 runtime details
-        MOV TL0, #000H			; Store Timer 0 runtime details
-        SETB TR0				; Enable Timer 0
+UPDATE: ; Update the 7-segment with the values
+        MOV DPTR, #SEGLT
+        MOVC A, @A+DPTR
+        MOV P0, A
+        MOV TH0, #0EFH
+        MOV TL0, #000H
+        SETB TR0
         RET
 
-DELAY:	JNB TF0, DELAY			; Once Timer 0 is enabled, keep looping till overload
-        CLR TR0					; Clear Timer runtime details
-        CLR TF0					; Clear Timer runtime details
+DELAY:	; Timer 0 delay for 7-segment multiplexing, too lazy to do calculation for additive timer
+        JNB TF0, DELAY
+        CLR TR0
+        CLR TF0
         RET
 
+        ; 42, upper nib = 4 and lower nib = 2
 LOWERNIB:
         ANL A, #0FH				; Find the bits 0-3
         RET
