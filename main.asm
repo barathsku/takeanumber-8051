@@ -47,7 +47,7 @@ BUT3:	; Service button (decrement) debouncing check
         ; if(service_no != 0) { decrement; } else { do_nothing; }
         MOV R4, #0
         MOV A, R1
-        MOV B, A
+        PUSH A
         ADD A, #99H             ; If the carry bit is set, then the value stored in the accumulator before executing this instruction
                                 ; is 0. There is probably a better way of doing this, feel free to amuse me (and yourself)
         DA A                    ; This is a shit way of hex->BCD conversion, use manual ADD instruction instead
@@ -60,7 +60,7 @@ BUT3:	; Service button (decrement) debouncing check
         ; if(service_no < 0) { set_previous_value; } (the value doesn't actually go below 0 in assembly, for this case
         ; decrementing 0 in hex will only go back to 99H because of how the instruction set in MCS-51 was designed to operate)
         JC MULTPLX
-        MOV A, B
+        POP A
         MOV R1, A
 
 MULTPLX:
@@ -68,14 +68,14 @@ MULTPLX:
         MOV P2, #00H
         SETB P2.0
         MOV A, R0
-        MOV B, A
+        PUSH A
         CALL LOWERNIB
         ACALL UPDATE			; Display queue number lower nibble to 7-segment
 
         ; Second segment
         MOV P2, #00H        
         SETB P2.1
-        MOV A, B
+        POP A
         CALL UPPERNIB
         ACALL UPDATE			; Display queue number upper nibble to 7-segment
 
@@ -83,14 +83,14 @@ MULTPLX:
         MOV  P2, #00H 
         SETB P2.3
         MOV A, R1
-        MOV B, A
+        PUSH A
         CALL LOWERNIB
         ACALL UPDATE			; Display service number lower nibble to 7-segment
 
         ; Fourth segment
         MOV P2, #00H             
         SETB P2.4
-        MOV A, B
+        POP A
         CALL UPPERNIB
         ACALL UPDATE                    ; Display service number upper nibble to 7-segment
 
