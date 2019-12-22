@@ -2,7 +2,7 @@
         JMP   MAIN
 
 MAIN: 	
-        MOV TMOD, #01H		
+        MOV TMOD, #01H		; Enable timer 0 (M0)
         MOV P1, #07H            ; 7-segment common port
         MOV R0, #00H		; Default queue number
         MOV R1, #00H		; Default service number
@@ -48,8 +48,8 @@ BUT3:	; Service button (decrement) debouncing check
         MOV R4, #0
         MOV A, R1
         MOV B, A
-        ADD A, #99H             ; If the carry bit is set, then the value stored in the accumulator before this instruction is 0. There
-                                ; is probably a better way of doing this, feel free to amuse me (and yourself)
+        ADD A, #99H             ; If the carry bit is set, then the value stored in the accumulator before executing this instruction
+                                ; is 0. There is probably a better way of doing this, feel free to amuse me (and yourself)
         DA A                    ; This is a shit way of hex->BCD conversion, useex manual ADD instruction instead
         MOV R1, A
         
@@ -57,7 +57,8 @@ BUT3:	; Service button (decrement) debouncing check
         MOV R5, #15				
         SETB P1.3				
 
-        ; if(service_no < 0) { set_previous_value; } (service_no < 0 is the same as saying the carry bit was set to 1 from the above ADD instruction)
+        ; if(service_no < 0) { set_previous_value; } (the value doesn't actually go below 0 in assembly, for this case
+        ; decrementing 0 in hex will only go back to 99H because of how the instruction set in MCS-51 was designed.)
         JC BUT3_FIN
         MOV A, B
         MOV R1, A
