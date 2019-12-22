@@ -9,8 +9,8 @@
 - Feel free to improve upon the code as you see fit! No need to give me credits if you want to use this code as a base or reference.
 - I am **not responsible** if you get caught copying this code for your homeworks or assignments.
 
-## To-dos
-- None so far, open a(n) pull request/issue for any suggestions or improvements..
+## To-dos & Issues
+- None so far, open a(n) pull request/issue if required..
 
 ## Circuit Diagram (Outdated, design will not work in Proteus)
 This circuit diagram is **outdated**. Additional components such as a button (for service number decrement) will be required for the code to work at its full potential. Please refer to the code when "completing" the circuit diagram for your usage. I will not fix the circuit diagram since I no longer have the software required to make the changes anymore.
