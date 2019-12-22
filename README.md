@@ -13,8 +13,8 @@
 - None so far, open a(n) pull request/issue if required..
 
 ## Circuit Diagram (Outdated, design will not work in Proteus)
-This circuit diagram is **outdated**. Additional components such as a button (for service number decrement) will be required for the code to work at its full potential. I am also not sure if the order in which the numbers are shown is reflected properly onto this circuit diagram. Please refer to the code when "completing" the circuit diagram for your usage. I will fix this later when I find the time to, in the meantime open an issue if you need assistance with this.
+This circuit diagram is **outdated**. Additional components such as a button (for service number decrement) will be required for the code to work at its full potential. I am also not sure if the order in which the numbers are shown is reflected properly onto this circuit diagram. Please refer to the code when "completing" the circuit diagram for your usage. I will fix this later when I find the time to, in the meantime open an issue if you need assistance.
 <p align="center"><img src="circuit-diagram.PNG" width="600" height="420"></p>
 
 ## Proteus vs. Practical Simulation Differences
-Using the above design (common cathode setup) breaks the simulation in Proteus. I am not sure of the reason and the solution behind this problem. For the circuit to work in Proteus, change the setup of the 7-segments from a common cathode to a common anode setup. If you know the reason why or how to solve the problem, please edit and issue a pull request for this file (README.md) and I will go through it.
+Using the above design (common cathode setup) breaks the simulation run in Proteus. I am not sure of the reason and the solution behind this problem. For the circuit to work in Proteus, change the setup of the 7-segments from a common cathode to a common anode setup. If you know the reason why or how to solve the problem, please edit and issue a pull request for this file (README.md) and I will go through it.
