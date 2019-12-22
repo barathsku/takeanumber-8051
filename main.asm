@@ -59,7 +59,7 @@ BUT3:	; Service button (decrement) debouncing check
 
         ; if(service_no < 0) { set_previous_value; } (the value doesn't actually go below 0 in assembly, for this case
         ; decrementing 0 in hex will only go back to 99H because of how the instruction set in MCS-51 was designed to operate)
-        JC BUT3_FIN
+        JC MULTPLX
         MOV A, B
         MOV R1, A
 
