@@ -10,9 +10,10 @@
 - I am **not responsible** if you get caught copying this code for your homeworks or assignments.
 
 ## To-dos
-- None so far, open a pull request for any suggestions or improvements..
+- None so far, open a(n) pull request/issue for any suggestions or improvements..
 
-## Circuit Diagram (Design will not work in Proteus)
+## Circuit Diagram (Outdated, design will not work in Proteus)
+This circuit diagram is **outdated**. Additional components such as a button (for service number decrement) will be required for the code to work at its full potential. Please refer to the code when "completing" the circuit diagram for your usage. I will not fix the circuit diagram since I no longer have the software required to make the changes anymore.
 <p align="center"><img src="circuit-diagram.PNG" width="600" height="420"></p>
 
 ## Proteus vs. Practical Simulation Differences
