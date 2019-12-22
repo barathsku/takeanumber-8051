@@ -1,32 +1,28 @@
         ORG   00H
         JMP   MAIN
 
-MAIN: 	MOV SCON, #52H			; 8-bit UART Mode 1, REN enabled, Timer 1 is set ready
-        MOV TMOD, #21H			; Enables Timer 1 (M1)/Timer 0 (M0)
-        MOV TH1, #0FDH			; Sets the appropriate value (related to baud rate at 11.0592MHz)
-        ANL	PCON, #7FH 			; Clear SMOD (to make sure that it won't affect the baud rate)
-        SETB TR1				; Enables Timer 1 (UART)
-        MOV P1, #07H
+MAIN: 	
+        MOV TMOD, #01H		
+        MOV P1, #07H            ; 7-segment common port
         MOV R0, #00H		; Default queue number
         MOV R1, #00H		; Default service number
         MOV R6, #00H
         MOV R2, #1		; Queue button debouncing flag
         MOV R3, #1		; Service increment button debouncing flag
         MOV R4, #1		; Service decrement button debouncing flag
-        ACALL UART
 
-BUT1:	JB P1.0, BUT2			; Check if the button has been pressed
-        CJNE R2, #1, BUT2		; If the button has already been pressed (FLAG - 1), jump to the next button subroutine
+BUT1:	; Queue button debouncing check
+        JB P1.0, BUT2
+        CJNE R2, #1, BUT2
+        
+        MOV R2, #0
+        MOV A, R0
+        ADD A, #01H
+        DA A
+        MOV R0, A
 
-        MOV R2, #0				; Set FLAG - 0 to indicate that the button is being pressed
-        MOV A, R0				; Move the queue number register to the accumulator
-        ADD A, #01H				; Add the value in the accumulator with #01H
-        DA A					; Adjust the value to the next closest Binary Encoded Decimal (BCD) and store it in the accumulator
-        MOV R0, A				; Move the value stored in the accumulator back to the queue number register
-
-        CALL UART				; Send the values to Ubidots
-
-BUT2:	JB P1.1, BUT3			; Check if the button has been pressed
+BUT2:	; Service button (increment) debouncing check
+        JB P1.1, BUT3
         CJNE R3, #1, BUT3		; If the button has already been pressed (FLAG - 1), jump to the next button subroutine
 
         MOV A, R0				; Move the queue number register to the accumulator
@@ -41,9 +37,6 @@ BUT2:	JB P1.1, BUT3			; Check if the button has been pressed
         ADD A, #01H				; Add the value in the accumulator with #01H
         DA A					; Adjust the value to the next closest Binary Encoded Decimal (BCD) and store it in the accumulator
         MOV R1, A				; Move the value stored in the accumulator back to the queue number register
-
-        CALL RANDNUMGEN			; Calls for the random number generator subroutine to be called
-        CALL UART				; Sends the values to Ubidots
 
 BUT3:	JB P1.2, MULTPLX		; Check if the button has been presseds
         CJNE R4, #1, MULTPLX	; If the button has already been pressed (FLAG - 1), jump to the next button subroutine
@@ -114,7 +107,7 @@ BUT3FLAG:
         LJMP BUT1				; Jump to the top of the code unconditionally
 
 ADDRESS_LIMIT_BYPASS:
-        LJMP BUT1				; Jump to the top of the code unconditionally (since jumping from JNB at this point would not work)
+        LJMP BUT1				; Jump to the top of the code unconditionally
 
 UPDATE: 
         MOV DPTR, #SEGLT		; Load the 7-segment encoded hex lookup table to the data pointer
@@ -137,67 +130,7 @@ LOWERNIB:
 UPPERNIB:
         SWAP A					; Swap bits 0-3 with bits 4-7
         ANL A, #0FH				; Find the newly replaced bits 0-3
-        RET
-
-RANDNUMGEN:
-        ACALL RAN1				; Generate the random number
-        MOV A, R6				; Move the counter number value to the accumulator
-        CALL LOWERNIB			; Find the lower nibble of the value
-        DA A					; Correct the hex to the nearest Binary Encoded Decimal (BCD)
-        MOV R6, A				; Move the corrected value in the accumulator back in the counter number register
-        RET
-
-RAN1:  	MOV A, R6			
-        JNZ RAN2				; Jump if the accumulator is not set (A == 0)
-        CPL A					; Change A = 0 to A = 1
-        MOV R6, A				; Move 1 into R6
-
-RAN2:	ANL A, #10111000B		; Perform XOR operation 
-        MOV C, P				; Find whether the value stored in the accumulator has an even or odd parity
-        MOV A, R6				; Move R6 into accumulator
-        RLC A					; Move bit 0 to bit 7 with carry bit
-        MOV R6, A				; Move the accumulator value back into R6
-        RET
-
-UART:	MOV A, R0
-        MOV B, A
-        ACALL UPPERNIB
-        ADD A, #30H
-        ACALL SEND
-        MOV A, B
-        ACALL LOWERNIB
-        ADD A, #30H
-        ACALL SEND
-
-        MOV A, #','
-        ACALL SEND
-
-        MOV A, R1
-        MOV B, A
-        ACALL UPPERNIB
-        ADD A, #30H
-        ACALL SEND
-        MOV A, B
-        ACALL LOWERNIB
-        ADD A, #30H
-        ACALL SEND
-
-        MOV A, #','
-        ACALL SEND
-
-        MOV A, R6
-        ADD A, #30H
-        ACALL SEND
-
-        MOV A, #0AH
-        ACALL SEND
-        RET
-
-SEND:	JNB TI, SEND	; Serial transmission subroutine for UART functionality
-        CLR TI
-        MOV SBUF, A
-        CLR A
-        RET
+        RET        
 
 ORG 	200H
 SEGLT:   
