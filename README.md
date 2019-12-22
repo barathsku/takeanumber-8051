@@ -13,7 +13,7 @@
 - None so far, open a(n) pull request/issue if required..
 
 ## Circuit Diagram (Outdated, design will not work in Proteus)
-This circuit diagram is **outdated**. Additional components such as a button (for service number decrement) will be required for the code to work at its full potential. I am also not sure if the order in which the numbers are shown is reflected properly onto this circuit diagram. Please refer to the code when "completing" the circuit diagram for your usage. I will not fix the circuit diagram since I no longer have the software required to make the changes anymore.
+This circuit diagram is **outdated**. Additional components such as a button (for service number decrement) will be required for the code to work at its full potential. I am also not sure if the order in which the numbers are shown is reflected properly onto this circuit diagram. Please refer to the code when "completing" the circuit diagram for your usage. I will fix this later when I find the time to, in the meantime open an issue if you need assistance with this.
 <p align="center"><img src="circuit-diagram.PNG" width="600" height="420"></p>
 
 ## Proteus vs. Practical Simulation Differences
